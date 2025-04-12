@@ -36,7 +36,15 @@ function setupUIEvents() {
     // Eventos de herramientas
     document.querySelectorAll('[data-tool]').forEach(btn => {
         btn.addEventListener('click', function() {
-            AppState.selectTool(this.dataset.tool);
+            appState.currentTool = this.dataset.tool;
+            updateToolSelection();
+            
+            // Llama a la función de inicialización específica
+            switch(appState.currentTool) {
+                case 'select': initSelectTool(); break;
+                case 'freehand': initFreehandTool(); break;
+                // ... otros casos
+            }
         });
     });
     

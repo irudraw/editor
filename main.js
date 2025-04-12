@@ -23,11 +23,11 @@ const appState = {
 let canvas;
 
 // Inicialización de la aplicación
+// En main.js
 function initApp() {
-    // Configurar canvas
-    setupCanvas();
+    setupCanvas(); // Configura el canvas (debe estar definido en canvas.js)
     
-    // Cargar fuentes del sistema
+    // Cargar fuentes
     loadSystemFonts().then(fonts => {
         appState.availableFonts = fonts;
         updateFontSelectors();
@@ -42,7 +42,7 @@ function initApp() {
     initPolygonTool();
     initFreehandTool();
     
-    // Inicializar propiedades
+    // Inicializar paneles de propiedades
     initBorderProperties();
     initTextProperties();
     initShapeProperties();
@@ -50,11 +50,12 @@ function initApp() {
     // Configurar utilidades
     initFileUtilities();
     initZoomUtilities();
+    keyboardShortcuts.init(canvas);
+    contextMenu.init(canvas);
+    history.init(canvas);
     
     // Configurar eventos globales
     setupGlobalEvents();
-    
-    // Actualizar selección de herramientas
     updateToolSelection();
 }
 
