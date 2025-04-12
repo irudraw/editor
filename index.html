@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Vectorial Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <!-- File Menu -->
+        <div class="toolbar-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="fileMenu" data-bs-toggle="dropdown">
+                <i class="fas fa-file me-1"></i> Archivo
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="fileMenu">
+                <li><a class="dropdown-item" href="#" id="new-file"><i class="fas fa-file me-2"></i>Nuevo</a></li>
+                <li><a class="dropdown-item" href="#" id="open-file"><i class="fas fa-folder-open me-2"></i>Abrir</a></li>
+                <li><a class="dropdown-item" href="#" id="save-file"><i class="fas fa-save me-2"></i>Guardar</a></li>
+            </ul>
+        </div>
+
+        <!-- Tools -->
+        <div class="toolbar-group">
+            <button class="tool-btn active" data-tool="select" title="Seleccionar">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+            <button class="tool-btn" data-tool="text" title="Texto">
+                <i class="fas fa-font"></i>
+            </button>
+            <button class="tool-btn" data-tool="rectangle" title="Rectángulo">
+                <i class="far fa-square"></i>
+            </button>
+            <button class="tool-btn" data-tool="ellipse" title="Elipse">
+                <i class="far fa-circle"></i>
+            </button>
+            <button class="tool-btn" data-tool="line" title="Línea">
+                <i class="fas fa-slash"></i>
+            </button>
+            <button class="tool-btn" data-tool="polygon" title="Polígono">
+                <i class="fas fa-shapes"></i>
+            </button>
+            <button class="tool-btn" data-tool="freehand" title="Mano alzada">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+        </div>
+
+        <!-- Right Aligned Tools -->
+        <div class="ms-auto d-flex">
+            <button class="tool-btn" id="toggle-properties">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Canvas Area -->
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <div class="page-container" id="page-container">
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Property Panel -->
+        <div class="property-panel" id="property-panel">
+            <div id="border-properties"></div>
+            <div id="text-properties"></div>
+            <div id="shape-properties"></div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <i class="fas fa-mouse-pointer"></i>
+            <span id="cursor-position">0, 0</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-layer-group"></i>
+            <span id="selected-object">Ninguno</span>
+        </div>
+        <div class="status-item ms-auto">
+            <i class="fas fa-expand-arrows-alt"></i>
+            <span id="zoom-level">100%</span>
+        </div>
+    </div>
+
+    <!-- Text Editor Modal -->
+    <div class="modal fade" id="text-editor-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editor de Texto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="form-control" id="text-editor-content" rows="10" style="font-family: Arial; font-size: 24px;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="apply-text-editor">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="file-input" style="display: none;">
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- App Modules -->
+    <script src="canvas.js"></script>
+    <script src="utils-fonts.js"></script>
+    <script src="utils-file.js"></script>
+    <script src="utils-zoom.js"></script>
+    <!-- Nuevos módulos -->
+    <script src="utils-history.js"></script>
+    <script src="utils-clipboard.js"></script>
+    <script src="tools-edit.js"></script>
+    <script src="utils-contextmenu.js"></script>
+    <script src="utils-shortcuts.js"></script>
+    
+    <!-- Tools -->
+    <script src="tools-select.js"></script>
+    <script src="tools-text.js"></script>
+    <script src="tools-rect.js"></script>
+    <script src="tools-ellipse.js"></script>
+    <script src="tools-line.js"></script>
+    <script src="tools-polygon.js"></script>
+    <script src="tools-freehand.js"></script>
+    
+    <!-- Properties -->
+    <script src="props-border.js"></script>
+    <script src="props-text.js"></script>
+    <script src="props-shape.js"></script>
+    
+    <!-- Main App -->
+    <script src="events.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
