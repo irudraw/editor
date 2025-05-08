@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VectorDesign Pro - Aplicación de Diseño Vectorial</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Estilos para las reglas */
+        .ruler {
+            position: absolute;
+            background-color: #f8f9fa;
+            z-index: 10;
+            overflow: hidden;
+        }
+        
+        .ruler.horizontal {
+            top: 0;
+            left: 40px;
+            width: calc(100% - 40px);
+            height: 40px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .ruler.vertical {
+            top: 40px;
+            left: 0;
+            width: 40px;
+            height: calc(100% - 40px);
+            border-right: 1px solid #dee2e6;
+        }
+        
+        .ruler-marker {
+            position: absolute;
+            color: #6c757d;
+            font-size: 10px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .ruler.horizontal .ruler-marker {
+            top: 15px;
+            transform: translateX(-50%);
+        }
+        
+        .ruler.vertical .ruler-marker {
+            left: 15px;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        
+        /* Estilos para las guías */
+        .guide {
+            position: absolute;
+            z-index: 5;
+        }
+        
+        .guide.horizontal {
+            width: 100%;
+            height: 1px;
+            background-color: rgba(0, 0, 255, 0.5);
+            cursor: row-resize;
+        }
+        
+        .guide.vertical {
+            width: 1px;
+            height: 100%;
+            background-color: rgba(0, 0, 255, 0.5);
+            cursor: col-resize;
+        }
+        
+        .guide-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: move;
+        }
+    </style>
+
+    <!-- Librerías de gráficos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/konva/8.3.2/konva.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/GraphicsJS/1.4.3/graphics.min.js"></script>
+
+    <!-- Complementos para filtros de imagen -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/CamanJS/4.1.2/caman.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/glfx.js/1.0.0/glfx.min.js"></script>
+
+    <!-- Librerías para manejo de color -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinycolor/1.6.0/tinycolor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chroma-js/2.4.2/chroma.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.min.js"></script>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <!-- File Menu -->
+        <div class="toolbar-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="fileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-file me-1"></i> Archivo
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="fileMenu">
+                <li><a class="dropdown-item" href="#" id="new-file"><i class="fas fa-file me-2"></i>Nuevo</a></li>
+                <li><a class="dropdown-item" href="#" id="open-file"><i class="fas fa-folder-open me-2"></i>Abrir</a></li>
+                <li><a class="dropdown-item" href="#" id="save-file"><i class="fas fa-save me-2"></i>Guardar</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="import-image"><i class="fas fa-file-import me-2"></i>Importar imagen</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="export-png"><i class="fas fa-file-image me-2"></i>Exportar como PNG</a></li>
+                <li><a class="dropdown-item" href="#" id="export-jpeg"><i class="fas fa-file-image me-2"></i>Exportar como JPEG</a></li>
+                <li><a class="dropdown-item" href="#" id="export-svg"><i class="fas fa-file-code me-2"></i>Exportar como SVG</a></li>
+                <li><a class="dropdown-item" href="#" id="export-pdf"><i class="fas fa-file-pdf me-2"></i>Exportar como PDF</a></li>
+            </ul>
+        </div>
+
+        <!-- Edit Menu -->
+        <div class="toolbar-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="editMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-edit me-1"></i> Editar
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="editMenu">
+                <li><a class="dropdown-item" href="#" id="undo-action"><i class="fas fa-undo me-2"></i>Deshacer<span class="shortcut">Ctrl+Z</span></a></li>
+                <li><a class="dropdown-item" href="#" id="redo-action"><i class="fas fa-redo me-2"></i>Rehacer<span class="shortcut">Ctrl+Y</span></a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="cut-action"><i class="fas fa-cut me-2"></i>Cortar<span class="shortcut">Ctrl+X</span></a></li>
+                <li><a class="dropdown-item" href="#" id="copy-action"><i class="fas fa-copy me-2"></i>Copiar<span class="shortcut">Ctrl+C</span></a></li>
+                <li><a class="dropdown-item" href="#" id="paste-action"><i class="fas fa-paste me-2"></i>Pegar<span class="shortcut">Ctrl+V</span></a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="delete-action"><i class="fas fa-trash-alt me-2"></i>Eliminar<span class="shortcut">Supr</span></a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="group-objects"><i class="fas fa-object-group me-2"></i>Agrupar <span class="shortcut">Ctrl+G</span></a></li>
+                <li><a class="dropdown-item" href="#" id="ungroup-objects"><i class="fas fa-object-ungroup me-2"></i>Desagrupar <span class="shortcut">Ctrl+Shift+G</span></a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="duplicate"><i class="fas fa-copy me-2"></i>Duplicar <span class="shortcut">Ctrl+D</span></a></li>
+            </ul>
+        </div>
+
+        <!-- View Menu -->
+        <div class="toolbar-group">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="viewMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-eye me-1"></i> Ver
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="viewMenu">
+                <li><a class="dropdown-item" href="#" id="zoom-in"><i class="fas fa-search-plus me-2"></i>Acercar</a></li>
+                <li><a class="dropdown-item" href="#" id="zoom-out"><i class="fas fa-search-minus me-2"></i>Alejar</a></li>
+                <li><a class="dropdown-item" href="#" id="zoom-fit"><i class="fas fa-expand me-2"></i>Ajustar a la ventana</a></li>
+                <li><a class="dropdown-item" href="#" id="zoom-100"><i class="fas fa-search me-2"></i>100%</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" id="toggle-grid"><i class="fas fa-th me-2"></i>Mostrar cuadrícula</a></li>
+                <li><a class="dropdown-item" href="#" id="toggle-rulers"><i class="fas fa-ruler-combined me-2"></i>Mostrar reglas</a></li>
+                <li><a class="dropdown-item" href="#" id="toggle-guides"><i class="fas fa-drafting-compass me-2"></i>Mostrar guías</a></li>
+            </ul>
+        </div>
+
+        <!-- Tools -->
+        <div class="toolbar-group">
+            <button class="tool-btn active" data-tool="select" title="Seleccionar (V)">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+            <button class="tool-btn" data-tool="text" title="Texto (T)">
+                <i class="fas fa-font"></i>
+            </button>
+            <button id="text-path-btn" class="tool-btn" title="Convertir texto a trazado">
+                <i class="fas fa-text-path"></i>
+            </button>
+            <button class="tool-btn" data-tool="rectangle" title="Rectángulo (R)">
+                <i class="far fa-square"></i>
+            </button>
+            <button class="tool-btn" data-tool="ellipse" title="Elipse (E)">
+                <i class="far fa-circle"></i>
+            </button>
+            <button class="tool-btn" data-tool="polygon" title="Polígono (Y)">
+                <i class="fas fa-shapes"></i>
+            </button>
+            <button class="tool-btn" data-tool="triangle" title="Triángulo (G)">
+                <i class="fas fa-play"></i>
+            </button>
+            <button class="tool-btn" data-tool="line" title="Línea (L)">
+                <i class="fas fa-slash"></i>
+            </button>
+            <button class="tool-btn" data-tool="pen" title="Pluma (P)">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button class="tool-btn" data-tool="freehand" title="Mano alzada (F)">
+                <i class="fas fa-pencil-alt"></i>
+            </button>
+            <button class="tool-btn professional" data-tool="professional-pen" title="Pluma profesional (P)">
+                <i class="fas fa-pen-fancy"></i>
+            </button>
+        </div>
+
+        <!-- Fill & Stroke -->
+        <div class="toolbar-group">
+            <div class="input-group input-group-sm" style="width: 120px;">
+                <span class="input-group-text">Relleno</span>
+                <input type="color" class="form-control form-control-color" id="fill-color" value="#ffffff" title="Color de relleno">
+            </div>
+            <div class="input-group input-group-sm ms-2" style="width: 120px;">
+                <span class="input-group-text">Borde</span>
+                <input type="color" class="form-control form-control-color" id="stroke-color" value="#000000" title="Color de borde">
+            </div>
+            <div class="input-group input-group-sm ms-2" style="width: 100px;">
+                <span class="input-group-text">Ancho</span>
+                <input type="number" class="form-control" id="stroke-width" min="0" max="50" value="1" step="0.1">
+            </div>
+            <div class="input-group input-group-sm ms-2" style="width: 120px;">
+                <span class="input-group-text">Estilo</span>
+                <select class="form-select form-select-sm" id="stroke-style">
+                    <option value="solid">Sólido</option>
+                    <option value="dashed">Discontinuo</option>
+                    <option value="dotted">Punteado</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Right Aligned Tools -->
+        <div class="ms-auto d-flex">
+            <button class="tool-btn" id="toggle-properties" title="Mostrar/Ocultar panel de propiedades">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+            <button class="tool-btn" id="document-settings" title="Configuración del documento">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" style="position: relative;">
+        <!-- Rulers -->
+        <div id="horizontal-ruler" class="ruler horizontal" style="display: none;"></div>
+        <div id="vertical-ruler" class="ruler vertical" style="display: none;"></div>
+        
+        <!-- Guides Container -->
+        <div id="guides-container" style="display: none;"></div>
+        
+        <!-- Canvas Area -->
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <div class="page-container">
+                    <canvas id="drawing-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Property Panel -->
+        <div class="property-panel" id="property-panel">
+            <div class="property-group">
+                <div class="property-group-title">Propiedades del objeto</div>
+                <div id="object-properties">
+                    <p class="text-muted small">Ningún objeto seleccionado</p>
+                </div>
+            </div>
+
+            <!-- Agrega estos elementos dentro de <div class="property-panel"> -->
+<div id="brush-settings-panel" class="property-group" style="display: none;">
+    <div class="property-group-title">Configuración del Pincel</div>
+    <!-- Contenido del panel del pincel aquí -->
+</div>
+
+<div id="gradient-editor-panel" class="property-group" style="display: none;">
+    <div class="property-group-title">Editor de Degradado</div>
+    <!-- Contenido del editor de degradado aquí -->
+</div>
+
+            <div class="property-group" id="text-properties" style="display: none;">
+                <div class="property-group-title">Propiedades de texto</div>
+                <div class="mb-2">
+                    <label class="form-label small">Fuente</label>
+                    <select class="form-select form-select-sm" id="text-font-family">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Impact">Impact</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Tamaño</label>
+                    <input type="number" class="form-control form-control-sm" id="text-font-size" min="6" max="144" value="24">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Color</label>
+                    <input type="color" class="form-control form-control-color form-control-sm" id="text-fill-color" value="#000000">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Estilo</label>
+                    <div class="d-flex">
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-bold"><i class="fas fa-bold"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-italic"><i class="fas fa-italic"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-underline"><i class="fas fa-underline"></i></button>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Alineación</label>
+                    <div class="d-flex">
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-align-left"><i class="fas fa-align-left"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-align-center"><i class="fas fa-align-center"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" id="text-align-right"><i class="fas fa-align-right"></i></button>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Espaciado</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small">Letras</label>
+                            <input type="number" class="form-control form-control-sm" id="text-char-spacing" min="0" max="100" value="0">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Líneas</label>
+                            <input type="number" class="form-control form-control-sm" id="text-line-height" min="0.5" max="5" step="0.1" value="1.1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="property-group" id="shape-properties" style="display: none;">
+                <div class="property-group-title">Propiedades de forma</div>
+                <div class="mb-2">
+                    <label class="form-label small">Radio de esquinas</label>
+                    <input type="number" class="form-control form-control-sm" id="shape-rx" min="0" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="property-group" id="border-properties" style="display: none;">
+                <div class="property-group-title">Propiedades del Borde</div>
+                <div class="mb-2">
+                    <label class="form-label small">Tipo de borde</label>
+                    <select class="form-select form-select-sm" id="border-type">
+                        <option value="outline">Contorno</option>
+                        <option value="box">Caja</option>
+                        <option value="underline">Subrayado</option>
+                    </select>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">Color</label>
+                        <input type="color" class="form-control form-control-color form-control-sm" id="border-color" value="#000000">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Anchura</label>
+                        <div class="input-group input-group-sm">
+                            <input type="number" class="form-control" id="border-width" min="0" max="50" value="1" step="0.1">
+                            <span class="input-group-text">px</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Estilo</label>
+                    <select class="form-select form-select-sm" id="border-style">
+                        <option value="solid">Sólido</option>
+                        <option value="dashed">Discontinuo</option>
+                        <option value="dotted">Punteado</option>
+                        <option value="double">Doble</option>
+                        <option value="groove">Ranura</option>
+                        <option value="ridge">Borde</option>
+                        <option value="inset">Hundido</option>
+                        <option value="outset">Resaltado</option>
+                    </select>
+                    <div class="border-style-preview mt-2" id="border-preview"></div>
+                </div>
+                <div class="mb-2" id="corner-radius-container">
+                    <label class="form-label small">Radio de esquinas</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control" id="corner-radius" min="0" max="100" value="0">
+                        <span class="input-group-text">px</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Posición</label>
+                    <select class="form-select form-select-sm" id="border-position">
+                        <option value="center">Centro</option>
+                        <option value="inside">Interno</option>
+                        <option value="outside">Externo</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Opacidad</label>
+                    <div class="custom-range-container">
+                        <i class="fas fa-eye-slash"></i>
+                        <input type="range" class="form-range" id="border-opacity" min="0" max="100" value="100">
+                        <i class="fas fa-eye"></i>
+                        <span class="custom-range-value" id="border-opacity-value">100%</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Efectos</label>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="border-shadow">
+                        <label class="form-check-label small" for="border-shadow">Sombra</label>
+                    </div>
+                    <div class="row g-2 mb-2" id="shadow-settings" style="display: none;">
+                        <div class="col-4">
+                            <label class="form-label small">Color</label>
+                            <input type="color" class="form-control form-control-color form-control-sm" id="shadow-color" value="#000000">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small">Desplazamiento</label>
+                            <input type="number" class="form-control form-control-sm" id="shadow-offset" min="0" max="20" value="2">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label small">Difuminado</label>
+                            <input type="number" class="form-control form-control-sm" id="shadow-blur" min="0" max="20" value="3">
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion mb-2" id="border-advanced-accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed py-1" type="button" data-bs-toggle="collapse" data-bs-target="#border-advanced-collapse">
+                                <span class="small">Opciones avanzadas</span>
+                            </button>
+                        </h2>
+                        <div id="border-advanced-collapse" class="accordion-collapse collapse" data-bs-parent="#border-advanced-accordion">
+                            <div class="accordion-body p-2">
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="border-behind-fill">
+                                    <label class="form-check-label small" for="border-behind-fill">Detrás del relleno</label>
+                                </div>
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input" type="checkbox" id="scale-with-object" checked>
+                                    <label class="form-check-label small" for="scale-with-object">Escalar con objeto</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary w-100" id="set-as-default">
+                    <i class="fas fa-save me-2"></i>Guardar como predeterminado
+                </button>
+            </div>
+
+            <div class="property-group" id="image-properties" style="display: none;">
+                <div class="property-group-title">Propiedades de imagen</div>
+                <div class="mb-2">
+                    <label class="form-label small">Filtro</label>
+                    <select class="form-select form-select-sm" id="image-filter">
+                        <option value="none">Ninguno</option>
+                        <option value="grayscale">Escala de grises</option>
+                        <option value="sepia">Sepia</option>
+                        <option value="invert">Invertir colores</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Opacidad</label>
+                    <input type="number" class="form-control form-control-sm" id="image-opacity" min="0" max="100" value="100">
+                </div>
+                <div class="mb-2">
+                    <button class="btn btn-sm btn-outline-secondary w-100" id="crop-image"><i class="fas fa-crop me-2"></i>Recortar imagen</button>
+                </div>
+            </div>
+
+            <div class="property-group">
+                <div class="property-group-title">Transformación</div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">X</label>
+                        <input type="number" class="form-control form-control-sm" id="transform-x">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Y</label>
+                        <input type="number" class="form-control form-control-sm" id="transform-y">
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small">Ancho</label>
+                        <input type="number" class="form-control form-control-sm" id="transform-width">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Alto</label>
+                        <input type="number" class="form-control form-control-sm" id="transform-height">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Rotación</label>
+                    <div class="custom-range-container">
+                        <i class="fas fa-undo"></i>
+                        <input type="range" class="form-range" id="transform-rotation" min="0" max="360" value="0">
+                        <i class="fas fa-redo"></i>
+                        <span class="custom-range-value" id="rotation-value">0°</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Opacidad</label>
+                    <div class="custom-range-container">
+                        <i class="fas fa-eye-slash"></i>
+                        <input type="range" class="form-range" id="transform-opacity" min="0" max="100" value="100">
+                        <i class="fas fa-eye"></i>
+                        <span class="custom-range-value" id="opacity-value">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="property-group">
+                <div class="property-group-title">Orden</div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="bring-to-front"><i class="fas fa-arrow-up me-2"></i>Traer al frente</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="bring-forward"><i class="fas fa-level-up-alt me-2"></i>Traer adelante</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="send-backward"><i class="fas fa-level-down-alt me-2"></i>Enviar atrás</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="send-to-back"><i class="fas fa-arrow-down me-2"></i>Enviar al fondo</button>
+                </div>
+            </div>
+
+            <!-- Panel de Capas -->
+            <div class="property-group">
+                <div class="property-group-title">
+                    <i class="fas fa-layer-group me-2"></i>Capas
+                    <button class="btn btn-sm btn-outline-secondary float-end py-0 px-2" id="new-layer" title="Nueva capa">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div id="layers-list" class="layers-container" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Las capas se generarán dinámicamente aquí -->
+                </div>
+                <div class="mt-2 d-grid gap-1">
+                    <button class="btn btn-sm btn-outline-secondary" id="toggle-visibility">
+                        <i class="fas fa-eye"></i> Visibilidad
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="toggle-lock">
+                        <i class="fas fa-lock"></i> Bloquear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <i class="fas fa-mouse-pointer"></i>
+            <span id="cursor-position">0, 0</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-ruler-combined"></i>
+            <span id="document-size">A4 (210 × 297 mm)</span>
+        </div>
+        <div class="status-item">
+            <i class="fas fa-layer-group"></i>
+            <span id="selected-object">Ninguno</span>
+        </div>
+        <div class="status-item ms-auto">
+            <i class="fas fa-expand-arrows-alt"></i>
+            <span id="zoom-level">100%</span>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item"><i class="fas fa-cut"></i>Cortar</div>
+        <div class="context-menu-item"><i class="fas fa-copy"></i>Copiar</div>
+        <div class="context-menu-item"><i class="fas fa-paste"></i>Pegar</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item"><i class="fas fa-trash-alt"></i>Eliminar</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item"><i class="fas fa-arrow-up"></i>Traer al frente</div>
+        <div class="context-menu-item"><i class="fas fa-arrow-down"></i>Enviar atrás</div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item"><i class="fas fa-cog"></i>Propiedades</div>
+    </div>
+
+    <!-- Document Settings Modal -->
+    <div class="modal fade" id="document-settings-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Configuración del documento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tamaño de página</label>
+                                <select class="form-select" id="page-size">
+                                    <option value="a4">A4 (210 × 297 mm)</option>
+                                    <option value="a3">A3 (297 × 420 mm)</option>
+                                    <option value="letter">Carta (216 × 279 mm)</option>
+                                    <option value="legal">Legal (216 × 356 mm)</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                            </div>
+                            <div class="row g-2" id="custom-size-container" style="display: none;">
+                                <div class="col-6">
+                                    <label class="form-label">Ancho (mm)</label>
+                                    <input type="number" class="form-control" id="page-width" min="10" max="1000" value="210">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Alto (mm)</label>
+                                    <input type="number" class="form-control" id="page-height" min="10" max="1000" value="297">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Orientación</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="page-orientation" id="portrait" value="portrait" checked>
+                                    <label class="form-check-label" for="portrait">Vertical</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="page-orientation" id="landscape" value="landscape">
+                                    <label class="form-check-label" for="landscape">Horizontal</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Color de fondo</label>
+                                <input type="color" class="form-control form-control-color" id="page-background" value="#ffffff">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Unidades</label>
+                                <select class="form-select" id="document-units">
+                                    <option value="mm">Milímetros (mm)</option>
+                                    <option value="cm">Centímetros (cm)</option>
+                                    <option value="in">Pulgadas (in)</option>
+                                    <option value="px">Píxeles (px)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Resolución</label>
+                                <select class="form-select" id="document-resolution">
+                                    <option value="72">72 ppi (Pantalla)</option>
+                                    <option value="150">150 ppi (Baja calidad)</option>
+                                    <option value="300" selected>300 ppi (Impresión)</option>
+                                    <option value="600">600 ppi (Alta calidad)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="apply-document-settings">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <!-- Text Editor Modal -->
+    <div class="modal fade" id="text-editor-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editor de texto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-editor-toolbar mb-3">
+                        <div class="btn-group btn-group-sm me-2">
+                            <select class="form-select form-select-sm" id="text-editor-font" style="width: 150px;">
+                                <option value="Arial">Arial</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Verdana">Verdana</option>
+                            </select>
+                        </div>
+                        <div class="btn-group btn-group-sm me-2">
+                            <select class="form-select form-select-sm" id="text-editor-size" style="width: 70px;">
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                                <option value="14">14</option>
+                                <option value="16">16</option>
+                                <option value="18">18</option>
+                                <option value="20">20</option>
+                                <option value="24" selected>24</option>
+                                <option value="28">28</option>
+                                <option value="32">32</option>
+                                <option value="36">36</option>
+                                <option value="48">48</option>
+                                <option value="72">72</option>
+                            </select>
+                        </div>
+                        <div class="btn-group btn-group-sm me-2">
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-bold"><i class="fas fa-bold"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-italic"><i class="fas fa-italic"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-underline"><i class="fas fa-underline"></i></button>
+                        </div>
+                        <div class="btn-group btn-group-sm me-2">
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-align-left"><i class="fas fa-align-left"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-align-center"><i class="fas fa-align-center"></i></button>
+                            <button type="button" class="btn btn-outline-secondary" id="text-editor-align-right"><i class="fas fa-align-right"></i></button>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                            <input type="color" class="form-control form-control-color" id="text-editor-color" value="#000000" title="Color del texto">
+                        </div>
+                    </div>
+                    <textarea class="form-control" id="text-editor-content" rows="10" style="font-family: Arial; font-size: 24px;"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="apply-text-editor">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- index.html (agregar después del modal de texto) -->
+<div class="modal fade" id="layer-settings-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Gestión de Capas</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="layers-list-container">
+            <!-- Las capas se generarán dinámicamente aquí -->
+          </div>
+          <button class="btn btn-primary mt-3" id="add-layer-btn">
+            <i class="fas fa-plus me-2"></i>Nueva Capa
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Image Crop Modal -->
+    <div class="modal fade" id="image-crop-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Recortar imagen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div id="crop-container" style="border: 1px solid #ddd; margin-bottom: 15px;"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Ancho</label>
+                                <input type="number" class="form-control" id="crop-width" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Alto</label>
+                                <input type="number" class="form-control" id="crop-height" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Posición X</label>
+                                <input type="number" class="form-control" id="crop-x" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Posición Y</label>
+                                <input type="number" class="form-control" id="crop-y" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="apply-crop">Aplicar recorte</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="image-import-input" accept="image/*" style="display: none;">
+    <input type="file" id="file-input" accept=".vectordesign,.json,.svg" style="display: none;">
+
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Fabric.js -->
+    <script src="fabric.min.js"></script>
+    <!-- Custom JS -->
+    <script src="utils.js"></script>
+    <script src="canvas.js"></script>
+    <script src="professional.js"></script>
+    <script src="tools.js"></script>
+    <script src="props.js"></script>
+    <script src="app.js"></script>
+
+
+
+
+
+    <script src="fileops.js"></script>
+    <script src="modals.js"></script>
+</body>
+</html>
